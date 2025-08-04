@@ -82,7 +82,7 @@
    "label": "Billing Address"
   },
   {
-   "fetch_from": "customer_name.customer_primary_address",
+   "fetch_from": "customer_name.customer_details",
    "fieldname": "site_address",
    "fieldtype": "Small Text",
    "label": "Site Address"
@@ -154,7 +154,8 @@
    "fieldtype": "Link",
    "in_standard_filter": 1,
    "label": "Supervisor",
-   "options": "User"
+   "options": "User",
+   "reqd": 1
   },
   {
    "fieldname": "reference_files",
@@ -257,7 +258,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-04 22:59:59.683562",
+ "modified": "2025-08-04 23:49:05.051409",
  "modified_by": "Administrator",
  "module": "maintenance-digeesh",
  "name": "Project Maintenance Contract",

@@ -104,7 +104,7 @@ frappe.ui.form.on('Project Maintenance Contract', {
     },
 
     onload: function(frm) {
-        // Filter service items (non-stock items)
+        
         frm.fields_dict['service_items'].grid.get_field('service_item').get_query = function() {
             return {
                 filters: {
@@ -115,12 +115,12 @@ frappe.ui.form.on('Project Maintenance Contract', {
             };
         };
 
-        // Filter UOM to specific values
+        
         frm.fields_dict['service_items'].grid.get_field('uom').get_query = function() {
             return {
-                filters: [
-                    ['UOM', 'name', 'in', ['Hrs', 'Hour', 'Hours', 'Visit', 'Session']]
-                ]
+                filters: {
+                    name: ['in', ['Hrs', 'Hour', 'Hours', 'Visit', 'Session']]
+                }
             };
         };
     },

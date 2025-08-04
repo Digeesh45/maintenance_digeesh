@@ -79,11 +79,11 @@ class ProjectMaintenanceContract(Document):
                 frappe.throw("Each Service Item must have a Description")
 
     def fetch_customer_details(self):
-        # Only fetch if customer name is selected
+    
         if not self.customer_name:
             return
 
-        # 1. Fetch Contact Details (Email, Phone)
+    
         if not self.customer_email or not self.customer_contact_number:
             contact = frappe.db.sql("""
                 SELECT c.email_id, c.phone
@@ -103,7 +103,7 @@ class ProjectMaintenanceContract(Document):
                 if contact.get("phone") and not self.customer_contact_number:
                     self.customer_contact_number = contact.phone
 
-        # 2. Fetch Billing Address
+        
         if not self.billing_address:
             address = frappe.db.sql("""
                 SELECT a.address_line1, a.address_line2, a.city, a.state, a.country, a.pincode
@@ -155,7 +155,7 @@ def create_billing_entry(docname, invoice_date, invoice_amount, invoice_status, 
     if flt(invoice_amount) > remaining_balance:
         frappe.throw(f"Invoice amount ({invoice_amount}) cannot exceed remaining balance ({remaining_balance})")
 
-    # Get current max idx from existing billing_schedule rows
+
     existing_rows = frappe.get_all(
         "Billing Schedule",
         filters={"parent": docname, "parenttype": "Project Maintenance Contract"},
@@ -163,7 +163,7 @@ def create_billing_entry(docname, invoice_date, invoice_amount, invoice_status, 
     )
     max_idx = max([row.idx for row in existing_rows], default=0)
 
-    # Insert child with next available idx
+    
     child = frappe.get_doc({
         "doctype": "Billing Schedule",
         "parent": doc.name,
@@ -179,7 +179,7 @@ def create_billing_entry(docname, invoice_date, invoice_amount, invoice_status, 
     child.flags.ignore_validate = True
     child.insert(ignore_permissions=True)
 
-    # Recalculate totals manually
+    
     billing_rows = frappe.get_all(
         "Billing Schedule",
         filters={"parent": docname, "parenttype": "Project Maintenance Contract", "invoice_status": "Paid"},
@@ -247,7 +247,7 @@ def get_service_item_details(item_code):
     try:
         item = frappe.get_doc("Item", item_code)
         
-        # In ERPNext v15, service items are identified by is_stock_item = 0
+    
         if item.is_stock_item:
             return {"valid": False}
 
