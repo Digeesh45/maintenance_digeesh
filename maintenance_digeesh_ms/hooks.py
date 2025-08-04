@@ -244,8 +244,15 @@ app_license = "mit"
 # }
 
 fixtures = [
+   
+    {
+        "dt": "Role",
+        "filters": [["name", "in", [
+            "Contract Reviewer",
+            "Contract Approver"
+        ]]]
+    },
     
-  
     
     {
         "dt": "Workflow",
