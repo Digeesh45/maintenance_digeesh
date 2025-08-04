@@ -48,6 +48,7 @@ app_license = "mit"
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
+
 # Svg Icons
 # ------------------
 # include app icons in desk
@@ -241,4 +242,40 @@ app_license = "mit"
 # default_log_clearing_doctypes = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
+
+fixtures = [
+
+    {
+        "dt": "Role",
+        "filters": [["name", "in", [
+            "Contract Reviewer",
+            "Contract Approver"
+        ]]]
+    },
+    
+    
+    {
+        "dt": "Workflow",
+        "filters": [["document_type", "=", "Project Maintenance Contract"]]
+    },
+    {
+        "dt": "Workflow State",
+        "filters": [["name", "in", [
+            "Draft",
+            "Submitted",
+            "Under Review",
+            "Approved",
+            "Rejected"
+        ]]]
+    },
+    {
+        "dt": "Workflow Action Master",
+        "filters": [["name", "in", [
+            "Submit",
+            "Review",
+            "Approve",
+            "Reject"
+        ]]]
+    }
+]
 
