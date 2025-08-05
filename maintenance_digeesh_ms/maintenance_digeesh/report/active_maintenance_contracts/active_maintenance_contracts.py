@@ -1,9 +1,5 @@
 # Copyright (c) 2025, digeesh and contributors
 # For license information, please see license.txt
-
-# Copyright (c) 2025, digeesh and contributors
-# License: MIT. See license.txt
-
 import frappe
 from frappe.utils import getdate
 
@@ -45,7 +41,7 @@ def get_data(filters):
 
     if filters.get("status"):
         try:
-            # Handles both list and string input
+           
             if isinstance(filters["status"], str):
                 status_list = [filters["status"]]
             else:
