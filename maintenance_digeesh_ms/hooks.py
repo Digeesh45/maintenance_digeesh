@@ -268,7 +268,7 @@ fixtures = [
             "Rejected"
         ]]]
     },
-    {
+        {
         "dt": "Workflow Action Master",
         "filters": [["name", "in", [
             "Submit",
