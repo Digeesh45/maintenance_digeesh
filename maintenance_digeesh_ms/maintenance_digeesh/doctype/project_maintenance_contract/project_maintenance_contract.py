@@ -79,11 +79,9 @@ class ProjectMaintenanceContract(Document):
                 frappe.throw("Each Service Item must have a Description")
 
     def fetch_customer_details(self):
-    
         if not self.customer_name:
             return
 
-    
         if not self.customer_email or not self.customer_contact_number:
             contact = frappe.db.sql("""
                 SELECT c.email_id, c.phone
@@ -103,7 +101,6 @@ class ProjectMaintenanceContract(Document):
                 if contact.get("phone") and not self.customer_contact_number:
                     self.customer_contact_number = contact.phone
 
-        
         if not self.billing_address:
             address = frappe.db.sql("""
                 SELECT a.address_line1, a.address_line2, a.city, a.state, a.country, a.pincode
@@ -131,7 +128,6 @@ class ProjectMaintenanceContract(Document):
                 self.billing_address = full_address
 
 
-
 @frappe.whitelist()
 def update_contract_status(docname, new_status):
     """Update contract status"""
@@ -142,6 +138,7 @@ def update_contract_status(docname, new_status):
     doc.db_set("status", new_status)
 
     return {"message": f"Contract status updated to {new_status}"}
+
 
 @frappe.whitelist()
 def create_billing_entry(docname, invoice_date, invoice_amount, invoice_status, remarks=None):
@@ -155,7 +152,6 @@ def create_billing_entry(docname, invoice_date, invoice_amount, invoice_status, 
     if flt(invoice_amount) > remaining_balance:
         frappe.throw(f"Invoice amount ({invoice_amount}) cannot exceed remaining balance ({remaining_balance})")
 
-
     existing_rows = frappe.get_all(
         "Billing Schedule",
         filters={"parent": docname, "parenttype": "Project Maintenance Contract"},
@@ -163,7 +159,6 @@ def create_billing_entry(docname, invoice_date, invoice_amount, invoice_status, 
     )
     max_idx = max([row.idx for row in existing_rows], default=0)
 
-    
     child = frappe.get_doc({
         "doctype": "Billing Schedule",
         "parent": doc.name,
@@ -179,7 +174,6 @@ def create_billing_entry(docname, invoice_date, invoice_amount, invoice_status, 
     child.flags.ignore_validate = True
     child.insert(ignore_permissions=True)
 
-    
     billing_rows = frappe.get_all(
         "Billing Schedule",
         filters={"parent": docname, "parenttype": "Project Maintenance Contract", "invoice_status": "Paid"},
@@ -193,53 +187,80 @@ def create_billing_entry(docname, invoice_date, invoice_amount, invoice_status, 
     return {"message": "Billing entry created successfully"}
 
 
-
 @frappe.whitelist()
 def generate_next_invoice(docname):
-    """Auto-generate next invoice based on contract type"""
-    doc = frappe.get_doc("Project Maintenance Contract", docname)
-    
-    if not doc.billing_schedule:
-        next_date = doc.contract_start_date
-    else:
-        last_invoice = max(doc.billing_schedule, key=lambda x: getdate(x.invoice_date))
+    """Auto-generate next invoice based on remaining balance"""
+    try:
+        doc = frappe.get_doc("Project Maintenance Contract", docname)
+        
+        if doc.docstatus != 1:
+            return {"success": False, "message": "Invoice can only be generated for submitted contracts."}
+        
+        remaining_balance = flt(doc.total_contract_value) - flt(doc.total_invoiced_amount)
+        if remaining_balance <= 0:
+            return {"success": False, "message": "No remaining balance to invoice. Contract billing is completed."}
+        
+        if not doc.contract_type:
+            return {"success": False, "message": "Contract Type is required to generate invoices."}
+        
+        if not doc.billing_schedule:
+            next_date = doc.contract_start_date or today()
+        else:
+            last_invoice = max(doc.billing_schedule, key=lambda x: getdate(x.invoice_date))
+            
+            if doc.contract_type == "Monthly":
+                next_date = add_months(last_invoice.invoice_date, 1)
+            elif doc.contract_type == "Quarterly":
+                next_date = add_months(last_invoice.invoice_date, 3)
+            elif doc.contract_type == "Bi-Annual":
+                next_date = add_months(last_invoice.invoice_date, 6)
+            elif doc.contract_type == "Annual":
+                next_date = add_months(last_invoice.invoice_date, 12)
+            else:
+                return {"success": False, "message": f"Invalid contract type: {doc.contract_type}"}
         
         if doc.contract_type == "Monthly":
-            next_date = add_months(last_invoice.invoice_date, 1)
+            amount = flt(doc.total_contract_value) / 12
         elif doc.contract_type == "Quarterly":
-            next_date = add_months(last_invoice.invoice_date, 3)
+            amount = flt(doc.total_contract_value) / 4
         elif doc.contract_type == "Bi-Annual":
-            next_date = add_months(last_invoice.invoice_date, 6)
+            amount = flt(doc.total_contract_value) / 2
         elif doc.contract_type == "Annual":
-            next_date = add_months(last_invoice.invoice_date, 12)
+            amount = flt(doc.total_contract_value)
         else:
-            frappe.throw("Invalid contract type")
-    
-    if doc.contract_type == "Monthly":
-        amount = flt(doc.total_contract_value) / 12
-    elif doc.contract_type == "Quarterly":
-        amount = flt(doc.total_contract_value) / 4
-    elif doc.contract_type == "Bi-Annual":
-        amount = flt(doc.total_contract_value) / 2
-    elif doc.contract_type == "Annual":
-        amount = flt(doc.total_contract_value)
-    
-    remaining_balance = flt(doc.total_contract_value) - flt(doc.total_invoiced_amount)
-    if amount > remaining_balance:
-        amount = remaining_balance
-    
-    if amount <= 0:
-        frappe.throw("No remaining balance to invoice")
-    
-    doc.append("billing_schedule", {
-        "invoice_date": next_date,
-        "invoice_amount": amount,
-        "invoice_status": "Pending",
-        "remarks": f"Auto-generated {doc.contract_type.lower()} invoice"
-    })
-    
-    doc.save()
-    return {"message": "Next invoice generated successfully"}
+            return {"success": False, "message": f"Cannot calculate amount for contract type: {doc.contract_type}"}
+        
+        if amount > remaining_balance:
+            amount = remaining_balance
+        
+        existing_rows = frappe.get_all(
+            "Billing Schedule",
+            filters={"parent": docname, "parenttype": "Project Maintenance Contract"},
+            fields=["idx"]
+        )
+        max_idx = max([row.idx for row in existing_rows], default=0)
+        
+        child = frappe.get_doc({
+            "doctype": "Billing Schedule",
+            "parent": doc.name,
+            "parenttype": "Project Maintenance Contract",
+            "parentfield": "billing_schedule",
+            "invoice_date": next_date,
+            "invoice_amount": amount,
+            "invoice_status": "Pending",
+            "remarks": f"Auto-generated {doc.contract_type.lower()} invoice",
+            "idx": max_idx + 1
+        })
+        child.flags.ignore_permissions = True
+        child.flags.ignore_validate = True
+        child.insert(ignore_permissions=True)
+        
+        return {"success": True, "message": f"Next invoice generated successfully for {frappe.format(amount, {'fieldtype': 'Currency'})} due on {frappe.format(next_date, {'fieldtype': 'Date'})}"}
+        
+    except Exception as e:
+        frappe.log_error(f"Error generating next invoice: {str(e)}", "Generate Next Invoice Error")
+        return {"success": False, "message": f"Error generating invoice: {str(e)}"}
+
 
 @frappe.whitelist()
 def get_service_item_details(item_code):
@@ -247,15 +268,21 @@ def get_service_item_details(item_code):
     try:
         item = frappe.get_doc("Item", item_code)
         
-    
         if item.is_stock_item:
             return {"valid": False}
+
+        allowed_uoms = ['Hrs', 'Visit', 'Session']
+        default_uom = 'Hrs'
+        
+        if item.stock_uom and item.stock_uom in allowed_uoms:
+            uom = item.stock_uom
+        else:
+            uom = default_uom
 
         return {
             "valid": True,
             "description": item.description or item.item_name,
-            "uom": item.stock_uom or "Hrs"
+            "uom": uom
         }
     except:
         return {"valid": False}
-    

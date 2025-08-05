@@ -39,6 +39,7 @@
   {
    "fieldname": "uom",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "UOM",
    "options": "UOM",
    "reqd": 1
@@ -66,12 +67,14 @@
   }
  ],
  "istable": 1,
- "modified": "2025-01-01 12:00:00",
+ "links": [],
+ "modified": "2025-08-05 08:44:31.285936",
  "modified_by": "Administrator",
  "module": "maintenance-digeesh",
  "name": "Maintenance Task",
  "owner": "Administrator",
  "permissions": [],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

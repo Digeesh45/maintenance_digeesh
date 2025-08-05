@@ -36,61 +36,35 @@ frappe.ui.form.on('Project Maintenance Contract', {
 
             let total_invoiced = frm.doc.total_invoiced_amount || 0;
             let total_contract = frm.doc.total_contract_value || 0;
+            let pending_balance = frm.doc.pending_balance || 0;
+            let status = frm.doc.status || '';
 
-            if (total_invoiced < total_contract) {
+            if (pending_balance > 0 && 
+                total_contract > 0 && 
+                status === 'Active' && 
+                (status !== 'Completed' && status !== 'Terminated')) {
+                
                 frm.add_custom_button(__('Generate Next Invoice'), function() {
-                    const d = new frappe.ui.Dialog({
-                        title: 'Generate Next Invoice',
-                        fields: [
-                            {
-                                label: 'Invoice Date',
-                                fieldname: 'invoice_date',
-                                fieldtype: 'Date',
-                                reqd: 1,
-                                default: frappe.datetime.get_today()
-                            },
-                            {
-                                label: 'Invoice Amount',
-                                fieldname: 'invoice_amount',
-                                fieldtype: 'Currency',
-                                reqd: 1
-                            },
-                            {
-                                label: 'Invoice Status',
-                                fieldname: 'invoice_status',
-                                fieldtype: 'Select',
-                                options: 'Paid\nPending\nOverdue',
-                                reqd: 1,
-                                default: 'Pending'
-                            },
-                            {
-                                label: 'Remarks',
-                                fieldname: 'remarks',
-                                fieldtype: 'Small Text'
-                            }
-                        ],
-                        primary_action_label: 'Create',
-                        primary_action(values) {
-                            frappe.call({
-                                method: 'maintenance_digeesh_ms.maintenance_digeesh.doctype.project_maintenance_contract.project_maintenance_contract.create_billing_entry',
-                                args: {
-                                    docname: frm.doc.name,
-                                    invoice_date: values.invoice_date,
-                                    invoice_amount: values.invoice_amount,
-                                    invoice_status: values.invoice_status,
-                                    remarks: values.remarks
-                                },
-                                callback: function(r) {
-                                    if (r.message) {
-                                        frappe.msgprint(r.message.message);
-                                        frm.reload_doc();
-                                    }
+                    frappe.call({
+                        method: 'maintenance_digeesh_ms.maintenance_digeesh.doctype.project_maintenance_contract.project_maintenance_contract.generate_next_invoice',
+                        args: {
+                            docname: frm.doc.name
+                        },
+                        callback: function(r) {
+                            if (r.message) {
+                                if (r.message.success) {
+                                    frappe.msgprint(r.message.message);
+                                    frm.reload_doc();
+                                } else {
+                                    frappe.msgprint({
+                                        title: 'Error',
+                                        message: r.message.message,
+                                        indicator: 'red'
+                                    });
                                 }
-                            });
-                            d.hide();
+                            }
                         }
                     });
-                    d.show();
                 });
             }
         }
@@ -104,7 +78,6 @@ frappe.ui.form.on('Project Maintenance Contract', {
     },
 
     onload: function(frm) {
-        
         frm.fields_dict['service_items'].grid.get_field('service_item').get_query = function() {
             return {
                 filters: {
@@ -115,58 +88,53 @@ frappe.ui.form.on('Project Maintenance Contract', {
             };
         };
 
-        
         frm.fields_dict['service_items'].grid.get_field('uom').get_query = function() {
             return {
                 filters: {
-                    name: ['in', ['Hrs', 'Hour', 'Hours', 'Visit', 'Session']]
+                    name: ['in', ['Hrs', 'Visit', 'Session']]
                 }
             };
         };
     },
 
+    before_workflow_action: async function (frm) {
+        if (frm.selected_workflow_action == "Submit") {
+            return new Promise((resolve, reject) => {
+                frappe.dom.unfreeze();
 
-  before_workflow_action: async function (frm) {
-    if (frm.selected_workflow_action == "Submit") {
-        return new Promise((resolve, reject) => {
-            frappe.dom.unfreeze();
-
-            const d = new frappe.ui.Dialog({
-                title: "Confirm Submission",
-                fields: [
-                    {
-                        fieldtype: "HTML",
-                        fieldname: "confirmation_html",
-                        options: `
-                            <b>
-                                Are you sure you want to <u>${frm.selected_workflow_action}</u>?<br><br>
-                                Contract Title: ${frm.doc.contract_title}<br>
-                                Contract Type: ${frm.doc.contract_type}<br>
-                                Total Estimated Hours: ${frm.doc.total_estimated_hours}<br>
-                                Total Contract Value: ${frm.doc.total_contract_value}<br>
-                            </b>
-                        `
+                const d = new frappe.ui.Dialog({
+                    title: "Confirm Submission",
+                    fields: [
+                        {
+                            fieldtype: "HTML",
+                            fieldname: "confirmation_html",
+                            options: `
+                                <b>
+                                    Are you sure you want to <u>${frm.selected_workflow_action}</u>?<br><br>
+                                    Contract Title: ${frm.doc.contract_title}<br>
+                                    Contract Type: ${frm.doc.contract_type}<br>
+                                    Total Estimated Hours: ${frm.doc.total_estimated_hours}<br>
+                                    Total Contract Value: ${frm.doc.total_contract_value}<br>
+                                </b>
+                            `
+                        }
+                    ],
+                    primary_action_label: "Confirm",
+                    primary_action: () => {
+                        d.hide();
+                        resolve();
+                    },
+                    secondary_action_label: "Back",
+                    secondary_action: () => {
+                        d.hide();
+                        reject("Action cancelled by user.");
                     }
-                ],
-                primary_action_label: "Confirm",
-                primary_action: () => {
-                    d.hide();
-                    resolve();
-                },
-                secondary_action_label: "Back",
-                secondary_action: () => {
-                    d.hide();
-                    reject("Action cancelled by user.");
-                }
+                });
+
+                d.show();
             });
-
-            d.show();
-        });
+        }
     }
-}
-
-
-
 });
 
 frappe.ui.form.on('Maintenance Task', {
@@ -185,7 +153,11 @@ frappe.ui.form.on('Maintenance Task', {
                             frappe.model.set_value(cdt, cdn, 'service_item', '');
                         } else {
                             frappe.model.set_value(cdt, cdn, 'description', r.message.description);
-                            frappe.model.set_value(cdt, cdn, 'uom', r.message.uom);
+                            if (r.message.uom && ['Hrs', 'Visit', 'Session'].includes(r.message.uom)) {
+                                frappe.model.set_value(cdt, cdn, 'uom', r.message.uom);
+                            } else {
+                                frappe.model.set_value(cdt, cdn, 'uom', 'Hrs');
+                            }
                         }
                     }
                 }
