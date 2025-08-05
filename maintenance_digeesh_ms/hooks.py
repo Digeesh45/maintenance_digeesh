@@ -244,7 +244,6 @@ app_license = "mit"
 # }
 
 fixtures = [
-   
     {
         "dt": "Role",
         "filters": [["name", "in", [
@@ -252,8 +251,6 @@ fixtures = [
             "Contract Approver"
         ]]]
     },
-    
-    
     {
         "dt": "Workflow",
         "filters": [["document_type", "=", "Project Maintenance Contract"]]
@@ -268,7 +265,7 @@ fixtures = [
             "Rejected"
         ]]]
     },
-        {
+    {
         "dt": "Workflow Action Master",
         "filters": [["name", "in", [
             "Submit",
