@@ -1,0 +1,29 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "UOM",
+  "enabled": 1,
+  "modified": "2025-08-04 19:52:50.756108",
+  "must_be_whole_number": 0,
+  "name": "Visit",
+  "uom_name": "Visit"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "UOM",
+  "enabled": 1,
+  "modified": "2025-08-04 19:53:35.795423",
+  "must_be_whole_number": 0,
+  "name": "Session",
+  "uom_name": "Session"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "UOM",
+  "enabled": 1,
+  "modified": "2025-08-04 19:52:30.662899",
+  "must_be_whole_number": 0,
+  "name": "Hrs",
+  "uom_name": "Hrs"
+ }
+]

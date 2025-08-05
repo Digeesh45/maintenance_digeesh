@@ -49,6 +49,7 @@
    "label": "Customer Information"
   },
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "customer_name",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -58,6 +59,7 @@
    "reqd": 1
   },
   {
+   "allow_in_quick_entry": 1,
    "fetch_from": "customer_name.email_id",
    "fetch_if_empty": 1,
    "fieldname": "customer_email",
@@ -79,10 +81,10 @@
    "fetch_from": "customer_name.customer_primary_address",
    "fieldname": "billing_address",
    "fieldtype": "Small Text",
-   "label": "Billing Address"
+   "label": "Billing Address",
+   "read_only": 1
   },
   {
-   "fetch_from": "customer_name.customer_details",
    "fieldname": "site_address",
    "fieldtype": "Small Text",
    "label": "Site Address"
@@ -117,6 +119,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "contract_type",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -150,12 +153,12 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "supervisor",
    "fieldtype": "Link",
    "in_standard_filter": 1,
    "label": "Supervisor",
-   "options": "User",
-   "reqd": 1
+   "options": "User"
   },
   {
    "fieldname": "reference_files",
@@ -180,8 +183,7 @@
    "fieldname": "service_items",
    "fieldtype": "Table",
    "label": "Service Items",
-   "options": "Maintenance Task",
-   "reqd": 1
+   "options": "Maintenance Task"
   },
   {
    "fieldname": "billing_section",
@@ -258,7 +260,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-04 23:49:05.051409",
+ "modified": "2025-08-05 10:51:57.246662",
  "modified_by": "Administrator",
  "module": "maintenance-digeesh",
  "name": "Project Maintenance Contract",

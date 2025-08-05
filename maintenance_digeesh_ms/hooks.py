@@ -276,6 +276,10 @@ fixtures = [
             "Approve",
             "Reject"
         ]]]
+    },
+    {
+        "dt": "UOM",
+        "filters": [["uom_name", "in", ["Hrs", "Session", "Visit"]]]
     }
 ]
 

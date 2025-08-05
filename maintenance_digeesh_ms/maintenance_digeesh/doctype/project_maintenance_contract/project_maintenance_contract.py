@@ -7,7 +7,7 @@ class ProjectMaintenanceContract(Document):
     def validate(self):
         self.calculate_duration()
         self.calculate_totals()
-        self.validate_contract_data()
+        
         self.fetch_customer_details()
         self.validate_dates()
         self.set_created_fields()
@@ -101,31 +101,7 @@ class ProjectMaintenanceContract(Document):
                 if contact.get("phone") and not self.customer_contact_number:
                     self.customer_contact_number = contact.phone
 
-        if not self.billing_address:
-            address = frappe.db.sql("""
-                SELECT a.address_line1, a.address_line2, a.city, a.state, a.country, a.pincode
-                FROM `tabAddress` a
-                JOIN `tabDynamic Link` dl ON dl.parent = a.name
-                WHERE dl.link_doctype = 'Customer'
-                  AND dl.link_name = %s
-                  AND dl.parenttype = 'Address'
-                  AND a.is_primary_address = 1
-                ORDER BY a.creation DESC
-                LIMIT 1
-            """, (self.customer_name,), as_dict=True)
-
-            if address:
-                address = address[0]
-                parts = [
-                    address.address_line1,
-                    address.address_line2,
-                    address.city,
-                    address.state,
-                    address.country,
-                    address.pincode
-                ]
-                full_address = ', '.join(filter(None, parts))
-                self.billing_address = full_address
+      
 
 
 @frappe.whitelist()

@@ -180,9 +180,9 @@ frappe.ui.form.on('Maintenance Task', {
 
 function calculate_total_cost(frm, cdt, cdn) {
     let row = locals[cdt][cdn];
-    if (row.estimated_hours && row.rate_per_hour) {
+   
         frappe.model.set_value(cdt, cdn, 'total_cost', row.estimated_hours * row.rate_per_hour);
-    }
+    
     calculate_totals(frm);
 }
 
